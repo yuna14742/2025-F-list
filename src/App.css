@@ -96,7 +96,7 @@ body {
 
 .profile-pic {
   width: 80px;
-  height: 80px;
+  aspect-ratio: 1/1;
   border-radius: 50%;
   object-fit: cover;
   cursor: pointer;
