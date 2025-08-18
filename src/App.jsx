@@ -495,17 +495,22 @@ function App() {
   const [zipsItems, setZipsItems] = useState([]);
   const [wishlistItems, setWishlistItems] = useState([]);
 
-  // 페이지 로드시 리다이렉트 결과 확인
+  // 페이지 로드시 리다이렉트 결과 확인 (수정함)
   useEffect(() => {
     const checkRedirectResult = async () => {
-      try {
-        const result = await handleRedirectResult();
-        if (result && result.user) {
-          console.log("리다이렉트 로그인 성공:", result.user);
+      // 약간의 지연 후 확인 (Firebase 초기화 대기)
+      setTimeout(async () => {
+        try {
+          const result = await handleRedirectResult();
+          if (result && result.user) {
+            console.log("리다이렉트 로그인 성공");
+            // 페이지 새로고침으로 확실하게 상태 동기화
+            window.location.reload();
+          }
+        } catch (error) {
+          console.error("리다이렉트 처리 실패:", error);
         }
-      } catch (error) {
-        console.error("리다이렉트 결과 처리 실패:", error);
-      }
+      }, 1000);
     };
 
     checkRedirectResult();
