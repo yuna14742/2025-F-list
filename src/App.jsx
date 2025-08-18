@@ -18,13 +18,7 @@ function Item({ brand, name, price, image }) {
   return (
     <div className="item">
       <div className="item-image">
-        <img
-          src={
-            image ||
-            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' fill='%23f3f4f6'%3E%3Crect width='150' height='150'/%3E%3C/svg%3E"
-          }
-          alt={name}
-        />
+        <img src={image || ""} alt={name} />
       </div>
       <p className="item-brand">{brand}</p>
       <p className="item-name">{name}</p>
@@ -167,10 +161,7 @@ function Profile({
     <div className="profile">
       <div className="profile-pic-container">
         <img
-          src={
-            profileImage ||
-            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' fill='%23f3f4f6'%3E%3Crect width='80' height='80'/%3E%3C/svg%3E"
-          }
+          src={profileImage || ""}
           alt="프로필"
           className="profile-pic"
           onClick={handlePhotoClick}
@@ -351,7 +342,7 @@ function AddItemModal({ isOpen, onClose, onAdd }) {
       brand: formData.brand,
       name: formData.name,
       price: `${Number.parseInt(formData.price).toLocaleString()}won`,
-      image: formData.image || "https://via.placeholder.com/150",
+      image: formData.image || "",
     });
     setFormData({ brand: "", name: "", price: "", image: "" });
     onClose();
@@ -491,9 +482,7 @@ function App() {
   const [activeTab, setActiveTab] = useState("zips");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [profileImage, setProfileImage] = useState(
-    "https://via.placeholder.com/80"
-  );
+  const [profileImage, setProfileImage] = useState("");
   const [nickname, setNickname] = useState("@nickname");
   const [description, setDescription] = useState(
     "나만의 옷 입기를 원하나요? 자신의 옷장에 대한 설명을 적어주세요!"
@@ -538,18 +527,14 @@ function App() {
               profile.description ||
                 "나만의 옷 입기를 원하나요? 자신의 옷장에 대한 설명을 적어주세요!"
             );
-            setProfileImage(
-              profile.profileImage ||
-                user.photoURL ||
-                "https://via.placeholder.com/80"
-            );
+            setProfileImage(profile.profileImage || user.photoURL || "");
           } else {
             // 첫 로그인시 기본 프로필 설정
             const defaultProfile = {
               nickname: `@${user.displayName || "user"}`,
               description:
                 "나만의 옷 입기를 원하나요? 자신의 옷장에 대한 설명을 적어주세요!",
-              profileImage: user.photoURL || "https://via.placeholder.com/80",
+              profileImage: user.photoURL || "",
             };
             setNickname(defaultProfile.nickname);
             setDescription(defaultProfile.description);
@@ -578,7 +563,7 @@ function App() {
         setDescription(
           "나만의 옷 입기를 원하나요? 자신의 옷장에 대한 설명을 적어주세요!"
         );
-        setProfileImage("https://via.placeholder.com/80");
+        setProfileImage("");
         setZipsItems([]);
         setWishlistItems([]);
       }
@@ -602,9 +587,7 @@ function App() {
           decoded.description ||
             "나만의 옷 입기를 원하나요? 자신의 옷장에 대한 설명을 적어주세요!"
         );
-        setProfileImage(
-          decoded.profileImage || "https://via.placeholder.com/80"
-        );
+        setProfileImage(decoded.profileImage || "");
         setZipsItems(decoded.zipsItems || []);
         setWishlistItems(decoded.wishlistItems || []);
       } catch (error) {
