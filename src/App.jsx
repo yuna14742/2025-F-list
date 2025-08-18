@@ -18,7 +18,13 @@ function Item({ brand, name, price, image }) {
   return (
     <div className="item">
       <div className="item-image">
-        <img src={image || "https://via.placeholder.com/150"} alt={name} />
+        <img
+          src={
+            image ||
+            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' fill='%23f3f4f6'%3E%3Crect width='150' height='150'/%3E%3C/svg%3E"
+          }
+          alt={name}
+        />
       </div>
       <p className="item-brand">{brand}</p>
       <p className="item-name">{name}</p>
@@ -161,7 +167,10 @@ function Profile({
     <div className="profile">
       <div className="profile-pic-container">
         <img
-          src={profileImage || "https://via.placeholder.com/80"}
+          src={
+            profileImage ||
+            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' fill='%23f3f4f6'%3E%3Crect width='80' height='80'/%3E%3C/svg%3E"
+          }
           alt="프로필"
           className="profile-pic"
           onClick={handlePhotoClick}
