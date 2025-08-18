@@ -70,28 +70,53 @@ const isDevelopment = () => {
 };
 
 // 인증 함수들
+// 인증 함수들
 export const signInWithGoogle = async () => {
   try {
-    // 일단 팝업 방식으로 시도
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      console.log("✅ 팝업 로그인 성공");
-      return result;
-    } catch (popupError) {
-      console.log("⚠️ 팝업 실패, 리다이렉트로 전환:", popupError.code);
+    const currentDomain = getCurrentDomain();
+    console.log("현재 도메인:", currentDomain);
+    console.log("개발 환경:", isDevelopment());
 
-      // 팝업이 안 되면 리다이렉트
-      if (
-        popupError.code === "auth/popup-blocked" ||
-        popupError.code === "auth/popup-closed-by-user"
-      ) {
-        await signInWithRedirect(auth, googleProvider);
-        return null;
+    // 개발 환경에서는 팝업 방식 우선 사용
+    if (isDevelopment()) {
+      try {
+        const result = await signInWithPopup(auth, googleProvider);
+        console.log("팝업 로그인 성공");
+        return result;
+      } catch (popupError) {
+        console.log(
+          "팝업 로그인 실패, 리다이렉트 방식으로 전환:",
+          popupError.code
+        );
+
+        if (
+          popupError.code === "auth/popup-blocked" ||
+          popupError.code === "auth/popup-closed-by-user" ||
+          popupError.code === "auth/unauthorized-domain"
+        ) {
+          await signInWithRedirect(auth, googleProvider);
+          return null;
+        }
+        throw popupError;
       }
-      throw popupError;
+    } else {
+      // 프로덕션에서는 리다이렉트 방식 사용
+      await signInWithRedirect(auth, googleProvider);
+      return null;
     }
   } catch (error) {
-    console.error("❌ Google 로그인 실패:", error);
+    console.error("Google 로그인 실패:", error);
+
+    // 도메인 승인 오류 처리
+    if (error.code === "auth/unauthorized-domain") {
+      const currentDomain = getCurrentDomain();
+      console.error("승인되지 않은 도메인:", currentDomain);
+
+      throw new Error(
+        `도메인 '${currentDomain}'이 Firebase에서 승인되지 않았습니다. Firebase Console에서 도메인을 추가해주세요.`
+      );
+    }
+
     throw error;
   }
 };
