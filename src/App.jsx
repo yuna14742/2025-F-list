@@ -490,7 +490,7 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isViewingShared, setIsViewingShared] = useState(false);
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); //나중에 true로 바꿔야함
 
   const [zipsItems, setZipsItems] = useState([]);
   const [wishlistItems, setWishlistItems] = useState([]);

@@ -72,15 +72,15 @@ const isDevelopment = () => {
 // 인증 함수들
 export const signInWithGoogle = async () => {
   try {
-    console.log("🔄 팝업 로그인 시도 중...");
+    console.log("팝업 로그인 시도 중");
 
     // 환경 상관없이 팝업 먼저 시도
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      console.log("✅ 팝업 로그인 성공:", result.user.email);
+      console.log("팝업 로그인 성공:", result.user.email);
       return result;
     } catch (popupError) {
-      console.log("⚠️ 팝업 실패:", popupError.code);
+      console.log("팝업 실패:", popupError.code);
 
       // 팝업이 차단되거나 닫힌 경우에만 리다이렉트로 폴백
       if (
@@ -88,7 +88,7 @@ export const signInWithGoogle = async () => {
         popupError.code === "auth/popup-closed-by-user" ||
         popupError.code === "auth/cancelled-popup-request"
       ) {
-        console.log("🔄 리다이렉트 방식으로 전환...");
+        console.log("리다이렉트 방식으로 전환");
         await signInWithRedirect(auth, googleProvider);
         return null;
       }
@@ -97,7 +97,7 @@ export const signInWithGoogle = async () => {
       throw popupError;
     }
   } catch (error) {
-    console.error("❌ Google 로그인 실패:", error);
+    console.error("Google 로그인 실패:", error);
 
     // 도메인 승인 오류 처리
     if (error.code === "auth/unauthorized-domain") {
@@ -202,7 +202,7 @@ export const subscribeToUserItems = (userId, callback) => {
   const docRef = doc(db, "userItems", userId);
   return onSnapshot(docRef, (doc) => {
     if (doc.exists()) {
-      console.log("🔄 실시간 데이터 업데이트");
+      console.log("실시간 데이터 업데이트");
       callback(doc.data());
     } else {
       callback({ zipsItems: [], wishlistItems: [] });
