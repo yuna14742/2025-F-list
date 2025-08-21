@@ -17,7 +17,7 @@ import {
 } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
 
-// Firebase 설정 (환경변수 사용)
+// Firebase 설정 (vercel 환경변수 사용)
 const firebaseConfig = {
   apiKey:
     import.meta.env.VITE_FIREBASE_API_KEY ||
@@ -154,7 +154,7 @@ export const saveUserProfile = async (userId, profileData) => {
 export const getUserProfile = async (userId) => {
   try {
     const docRef = doc(db, "users", userId);
-    const docSnap = await getDoc(docRef);
+    const docSnap = await getDoc(docRef); //데이터 가져오기
 
     if (docSnap.exists()) {
       console.log("프로필 로드 성공");

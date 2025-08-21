@@ -485,7 +485,7 @@ function App() {
   const [profileImage, setProfileImage] = useState("");
   const [nickname, setNickname] = useState("@nickname");
   const [description, setDescription] = useState(
-    "나만의 옷 입기를 원하나요? 자신의 옷장에 대한 설명을 적어주세요!"
+    "나만의 옷장을 원하나요? 자신의 옷장에 대한 설명을 적어주세요!"
   );
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isViewingShared, setIsViewingShared] = useState(false);
@@ -526,7 +526,7 @@ function App() {
             setNickname(profile.nickname || `@${user.displayName || "user"}`);
             setDescription(
               profile.description ||
-                "나만의 옷 입기를 원하나요? 자신의 옷장에 대한 설명을 적어주세요!"
+                "나만의 옷장을 원하나요? 자신의 옷장에 대한 설명을 적어주세요!"
             );
             setProfileImage(profile.profileImage || user.photoURL || "");
           } else {
@@ -534,7 +534,7 @@ function App() {
             const defaultProfile = {
               nickname: `@${user.displayName || "user"}`,
               description:
-                "나만의 옷 입기를 원하나요? 자신의 옷장에 대한 설명을 적어주세요!",
+                "나만의 옷장을 원하나요? 자신의 옷장에 대한 설명을 적어주세요!",
               profileImage: user.photoURL || "",
             };
             setNickname(defaultProfile.nickname);
@@ -562,7 +562,7 @@ function App() {
         setIsLoggedIn(false);
         setNickname("@nickname");
         setDescription(
-          "나만의 옷 입기를 원하나요? 자신의 옷장에 대한 설명을 적어주세요!"
+          "나만의 옷장을 원하나요? 자신의 옷장에 대한 설명을 적어주세요!"
         );
         setProfileImage("");
         setZipsItems([]);
@@ -586,7 +586,7 @@ function App() {
         setNickname(decoded.nickname || "@nickname");
         setDescription(
           decoded.description ||
-            "나만의 옷 입기를 원하나요? 자신의 옷장에 대한 설명을 적어주세요!"
+            "나만의 옷장을 원하나요? 자신의 옷장에 대한 설명을 적어주세요!"
         );
         setProfileImage(decoded.profileImage || "");
         setZipsItems(decoded.zipsItems || []);
