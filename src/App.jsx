@@ -89,12 +89,6 @@ function Profile({
     setIsEditingNickname(false);
   };
 
-  // 닉네임 편집 취소
-  const handleNicknameCancel = () => {
-    setTempNickname(nickname.replace("@", ""));
-    setIsEditingNickname(false);
-  };
-
   // 설명 편집 시작
   const handleDescriptionClick = () => {
     if (isLoggedIn && !isViewingShared) {
@@ -115,43 +109,38 @@ function Profile({
     setIsEditingDescription(false);
   };
 
-  // 설명 편집 취소
-  const handleDescriptionCancel = () => {
-    setTempDescription(description);
-    setIsEditingDescription(false);
-  };
-
   // 키보드 이벤트 처리
   const handleNicknameKeyDown = (e) => {
     if (e.key === "Enter") {
       handleNicknameSubmit();
-    } else if (e.key === "Escape") {
-      handleNicknameCancel();
     }
   };
 
   const handleDescriptionKeyDown = (e) => {
     if (e.key === "Enter") {
       handleDescriptionSubmit();
-    } else if (e.key === "Escape") {
-      handleDescriptionCancel();
     }
   };
 
-  // 메뉴 외부 클릭시 닫기
+  // 외부 클릭시 메뉴,닉네임,설명 닫기
   useEffect(() => {
     const handleClickOutside = (e) => {
+      //메뉴 열려있고 && 프로필 사진 영역 아닌 곳 클릭시 메뉴 닫기
       if (showMenu && !e.target.closest(".profile-pic-container")) {
-        setShowMenu(false);
+        setShowMenu(false); //e.target: 내가 클릭한 요소, .closet(""): 클릭한 요소가 지정한 영역 안에 포함되는지 검사
       }
+      //닉네임 수정 중이고, 닉네임 입력창 아닌 곳 클릭시 닉네임 저장,닫기
       if (isEditingNickname && !e.target.closest(".nickname-edit")) {
         handleNicknameSubmit();
       }
+      //설명 수정 중이고, 설명 입력창 아닌 곳 클릭시 설명 저장,닫기
       if (isEditingDescription && !e.target.closest(".description-edit")) {
         handleDescriptionSubmit();
       }
     };
+    //웹페이지 전체에 "클릭" 이벤트 달기
     document.addEventListener("click", handleClickOutside);
+    //컴포넌트 사라질 때 이벤트 제거하기
     return () => document.removeEventListener("click", handleClickOutside);
   }, [showMenu, isEditingNickname, isEditingDescription]);
 
