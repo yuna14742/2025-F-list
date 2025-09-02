@@ -565,30 +565,26 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // URL에서 공유 데이터 로드 (Firebase저장방식으로 바꿈)
+  // URL에서 공유 데이터 로드 (기존 방식)
   useEffect(() => {
-    const shareId = new URLSearchParams(window.location.search).get("share");
+    const urlParams = new URLSearchParams(window.location.search);
+    const sharedData = urlParams.get("shared");
 
-    if (shareId) {
-      const loadSharedData = async () => {
-        try {
-          const docSnap = await getDoc(doc(db, "shares", shareId));
-
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            setIsViewingShared(true);
-            setNickname(data.nickname || "@nickname");
-            setDescription(data.description || "설명이 없습니다.");
-            setProfileImage(data.profileImage || "");
-            setZipsItems(data.zipsItems || []);
-            setWishlistItems(data.wishlistItems || []);
-          }
-        } catch (error) {
-          console.error("공유 데이터 로드 실패:", error);
-        }
-      };
-
-      loadSharedData();
+    if (sharedData) {
+      try {
+        const decoded = JSON.parse(decodeURIComponent(sharedData));
+        setIsViewingShared(true);
+        setNickname(decoded.nickname || "@nickname");
+        setDescription(
+          decoded.description ||
+            "나만의 옷장을 원하나요? 자신의 옷장에 대한 설명을 적어주세요!"
+        );
+        setProfileImage(decoded.profileImage || "");
+        setZipsItems(decoded.zipsItems || []);
+        setWishlistItems(decoded.wishlistItems || []);
+      } catch (error) {
+        console.error("공유 데이터 로드 실패:", error);
+      }
     }
   }, []);
 
@@ -705,39 +701,30 @@ function App() {
     setShowAddModal(true);
   };
 
-  // 공유 기능 (Firebase 저장 방식) url 줄일 수 있음
+  // 공유 링크 복사 기능 (tiny url 사용)
   const handleShare = async () => {
+    const shareData = {
+      nickname,
+      description,
+      profileImage,
+      zipsItems,
+      wishlistItems,
+    };
+    const encoded = encodeURIComponent(JSON.stringify(shareData));
+    const longUrl = `${window.location.origin}?shared=${encoded}`;
+
+    //Tinyurl API 사용
     try {
-      const shareData = {
-        nickname,
-        description,
-        profileImage,
-        zipsItems,
-        wishlistItems,
-        createdAt: new Date().toISOString(), //생성 시간 추가함
-      };
+      const response = await fetch(
+        `https://tinyurl.com/api-create.php?url=${longUrl}`
+      );
+      const shortUrl = await response.text();
 
-      //고유한 공유 ID 생성
-      const shareId =
-        Date.now().toString() + Math.random().toString(36).substr(2, 5);
-
-      //Firebase에 공유 데이터 저장
-      await setDoc(doc(db, "shares", shareId), shareData);
-
-      //URL 생성
-      const shareUrl = `${window.location.origin}${window.location.pathname}?share=${shareId}`;
-
-      navigator.clipboard
-        .writeText(shareUrl)
-        .then(() => {
-          alert("공유 링크가 클립보드에 복사되었습니다");
-        })
-        .catch(() => {
-          prompt("공유 링크를 복사하세요:", shareUrl);
-        });
+      navigator.clipboard.writeText(shortUrl);
+      alert("공유 링크가 복사되었습니다");
     } catch (error) {
-      console.error("공유 링크 생성 실패:", error);
-      alert("공유 링크 생성에 실패했습니다. 다시 시도해주세요.");
+      // 실패시 원래 URL 사용하도록
+      navigator.clipboard.writeText(longUrl);
     }
   };
 
