@@ -566,23 +566,48 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // URL에서 공유 데이터 로드
+  // URL에서 공유 데이터 로드 (Firebase 방식)
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const sharedData = urlParams.get("s"); // "shared" → "s"
+    console.log("URL 확인:", window.location.search);
 
-    if (sharedData) {
-      try {
-        const decoded = JSON.parse(decodeURIComponent(sharedData));
-        setIsViewingShared(true);
-        setNickname(decoded.n || "@nickname"); // n → nickname
-        setDescription(decoded.d || "기본 설명"); // d → description
-        setProfileImage(decoded.p || ""); // p → profileImage
-        setZipsItems(decoded.z || []); // z → zipsItems
-        setWishlistItems(decoded.w || []); // w → wishlistItems
-      } catch (error) {
-        console.error("공유 데이터 로드 실패:", error);
-      }
+    const urlParams = new URLSearchParams(window.location.search);
+    const shareId = urlParams.get("share");
+
+    console.log("shareId:", shareId);
+
+    if (shareId) {
+      console.log("공유 ID 발견!");
+
+      const loadSharedData = async () => {
+        try {
+          const docRef = doc(db, "shares", shareId);
+          const docSnap = await getDoc(docRef);
+
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            console.log("로드된 데이터:", data);
+
+            setIsViewingShared(true);
+            setNickname(data.nickname || "@nickname");
+            setDescription(data.description || "설명이 없습니다.");
+            setProfileImage(data.profileImage || "");
+            setZipsItems(data.zipsItems || []);
+            setWishlistItems(data.wishlistItems || []);
+
+            console.log("공유 데이터 설정 완료");
+          } else {
+            console.error("공유 데이터를 찾을 수 없습니다.");
+            alert("유효하지 않은 공유 링크입니다.");
+          }
+        } catch (error) {
+          console.error("공유 데이터 로드 실패:", error);
+          alert("공유 데이터를 불러오는데 실패했습니다.");
+        }
+      };
+
+      loadSharedData();
+    } else {
+      console.log("공유 ID 없음 - 일반 모드");
     }
   }, []);
 
@@ -699,35 +724,46 @@ function App() {
     setShowAddModal(true);
   };
 
-  // 공유 기능 (원본 방식으로 되돌림)
-  const handleShare = () => {
-    const shareData = {
-      n: nickname, // nickname → n
-      d: description, // description → d
-      p: profileImage, // profileImage → p
-      z: zipsItems.map((item) => ({
-        // zipsItems → z
-        b: item.brand, // brand → b
-        n: item.name, // name → n
-        pr: item.price, // price → pr
-        i: item.image, // image → i
-        id: item.id,
-      })),
-      w: wishlistItems.map((item) => ({
-        // wishlistItems → w
-        b: item.brand,
-        n: item.name,
-        pr: item.price,
-        i: item.image,
-        id: item.id,
-      })),
-    };
+  // 공유 기능 (Firebase 저장 방식)
+  const handleShare = async () => {
+    try {
+      console.log("🔄 공유 시작");
 
-    const encoded = encodeURIComponent(JSON.stringify(shareData));
-    const shareUrl = `${window.location.origin}${window.location.pathname}?s=${encoded}`; // shared → s
+      const shareData = {
+        nickname,
+        description,
+        profileImage,
+        zipsItems,
+        wishlistItems,
+        createdAt: new Date().toISOString(),
+      };
 
-    navigator.clipboard.writeText(shareUrl);
-    alert("공유 링크가 복사되었습니다!");
+      // 고유한 공유 ID 생성
+      const shareId =
+        Date.now().toString() + Math.random().toString(36).substr(2, 5);
+
+      console.log("공유 ID:", shareId);
+
+      // Firebase에 공유 데이터 저장
+      await setDoc(doc(db, "shares", shareId), shareData);
+
+      // 짧은 URL 생성
+      const shareUrl = `${window.location.origin}${window.location.pathname}?share=${shareId}`;
+
+      console.log("공유 URL:", shareUrl);
+
+      navigator.clipboard
+        .writeText(shareUrl)
+        .then(() => {
+          alert("공유 링크가 복사되었습니다");
+        })
+        .catch(() => {
+          prompt("공유 링크를 복사하세요:", shareUrl);
+        });
+    } catch (error) {
+      console.error("공유 실패:", error);
+      alert("공유에 실패했습니다. 다시 시도해주세요.");
+    }
   };
 
   //로딩 중일때 해결 -> 시크릿모드로 접속, 인터넷 캐시 삭제
