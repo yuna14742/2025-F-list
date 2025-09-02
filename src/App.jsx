@@ -36,7 +36,6 @@ function Profile({
   onNicknameChange,
   onDescriptionChange,
   isLoggedIn,
-  isViewingShared,
 }) {
   const [showMenu, setShowMenu] = useState(false);
   const [isEditingNickname, setIsEditingNickname] = useState(false);
@@ -48,7 +47,7 @@ function Profile({
   const descriptionInputRef = useRef(null);
 
   const handlePhotoClick = () => {
-    if (isLoggedIn && !isViewingShared) {
+    if (isLoggedIn) {
       setShowMenu(!showMenu);
     }
   };
@@ -71,7 +70,7 @@ function Profile({
 
   // 닉네임 편집 시작
   const handleNicknameClick = () => {
-    if (isLoggedIn && !isViewingShared) {
+    if (isLoggedIn) {
       setIsEditingNickname(true);
       setTempNickname(nickname.replace("@", ""));
       setTimeout(() => {
@@ -91,7 +90,7 @@ function Profile({
 
   // 설명 편집 시작
   const handleDescriptionClick = () => {
-    if (isLoggedIn && !isViewingShared) {
+    if (isLoggedIn) {
       setIsEditingDescription(true);
       setTempDescription(description);
       setTimeout(() => {
@@ -144,7 +143,7 @@ function Profile({
     return () => document.removeEventListener("click", handleClickOutside);
   }, [showMenu, isEditingNickname, isEditingDescription]);
 
-  const canEdit = isLoggedIn && !isViewingShared;
+  const canEdit = isLoggedIn;
 
   return (
     <div className="profile">
@@ -291,28 +290,6 @@ function Tabs({ activeTab, onTabChange }) {
         </button>
       </div>
     </div>
-  );
-}
-
-// 공유 버튼 컴포넌트
-function ShareButton({ onShare }) {
-  return (
-    <button onClick={onShare} className="share-btn" title="프로필 공유하기">
-      <svg
-        width="16"
-        height="16"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
-        />
-      </svg>
-    </button>
   );
 }
 
@@ -477,7 +454,6 @@ function App() {
     "나만의 옷장을 원하나요? 자신의 옷장에 대한 설명을 적어주세요!"
   );
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isViewingShared, setIsViewingShared] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false); //나중에 true로 바꿔야함
 
@@ -566,55 +542,10 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // URL에서 공유 데이터 로드 (Firebase 방식)
-  useEffect(() => {
-    console.log("URL 확인:", window.location.search);
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const shareId = urlParams.get("share");
-
-    console.log("shareId:", shareId);
-
-    if (shareId) {
-      console.log("공유 ID 발견!");
-
-      const loadSharedData = async () => {
-        try {
-          const docRef = doc(db, "shares", shareId);
-          const docSnap = await getDoc(docRef);
-
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            console.log("로드된 데이터:", data);
-
-            setIsViewingShared(true);
-            setNickname(data.nickname || "@nickname");
-            setDescription(data.description || "설명이 없습니다.");
-            setProfileImage(data.profileImage || "");
-            setZipsItems(data.zipsItems || []);
-            setWishlistItems(data.wishlistItems || []);
-
-            console.log("공유 데이터 설정 완료");
-          } else {
-            console.error("공유 데이터를 찾을 수 없습니다.");
-            alert("유효하지 않은 공유 링크입니다.");
-          }
-        } catch (error) {
-          console.error("공유 데이터 로드 실패:", error);
-          alert("공유 데이터를 불러오는데 실패했습니다.");
-        }
-      };
-
-      loadSharedData();
-    } else {
-      console.log("공유 ID 없음 - 일반 모드");
-    }
-  }, []);
-
   // 프로필 변경시 Firebase에 저장
   const handleNicknameChange = async (newNickname) => {
     setNickname(newNickname);
-    if (user && !isViewingShared) {
+    if (user) {
       try {
         await saveUserProfile(user.uid, { nickname: newNickname });
       } catch (error) {
@@ -625,7 +556,7 @@ function App() {
 
   const handleDescriptionChange = async (newDescription) => {
     setDescription(newDescription);
-    if (user && !isViewingShared) {
+    if (user) {
       try {
         await saveUserProfile(user.uid, { description: newDescription });
       } catch (error) {
@@ -636,7 +567,7 @@ function App() {
 
   const handlePhotoChange = async (newPhoto) => {
     setProfileImage(newPhoto);
-    if (user && !isViewingShared) {
+    if (user) {
       try {
         await saveUserProfile(user.uid, { profileImage: newPhoto });
       } catch (error) {
@@ -724,48 +655,6 @@ function App() {
     setShowAddModal(true);
   };
 
-  // 공유 기능 (Firebase 저장 방식)
-  const handleShare = async () => {
-    try {
-      console.log("🔄 공유 시작");
-
-      const shareData = {
-        nickname,
-        description,
-        profileImage,
-        zipsItems,
-        wishlistItems,
-        createdAt: new Date().toISOString(),
-      };
-
-      // 고유한 공유 ID 생성
-      const shareId =
-        Date.now().toString() + Math.random().toString(36).substr(2, 5);
-
-      console.log("공유 ID:", shareId);
-
-      // Firebase에 공유 데이터 저장
-      await setDoc(doc(db, "shares", shareId), shareData);
-
-      // 짧은 URL 생성
-      const shareUrl = `${window.location.origin}${window.location.pathname}?share=${shareId}`;
-
-      console.log("공유 URL:", shareUrl);
-
-      navigator.clipboard
-        .writeText(shareUrl)
-        .then(() => {
-          alert("공유 링크가 복사되었습니다");
-        })
-        .catch(() => {
-          prompt("공유 링크를 복사하세요:", shareUrl);
-        });
-    } catch (error) {
-      console.error("공유 실패:", error);
-      alert("공유에 실패했습니다. 다시 시도해주세요.");
-    }
-  };
-
   //로딩 중일때 해결 -> 시크릿모드로 접속, 인터넷 캐시 삭제
   if (loading) {
     return (
@@ -792,9 +681,7 @@ function App() {
       <div className="header">
         <h1>F-list</h1>
         <div className="header-buttons">
-          {isLoggedIn && !isViewingShared && (
-            <ShareButton onShare={handleShare} />
-          )}
+          {isLoggedIn}
           <button className="login-btn" onClick={handleLogin}>
             {isLoggedIn ? (
               // 열린 자물쇠 (로그인 상태)
@@ -849,13 +736,6 @@ function App() {
         </div>
       </div>
 
-      {/* 공유 모드 알림 */}
-      {isViewingShared && (
-        <div className="shared-notice">
-          <p>다른 사용자의 F-list를 보고 있습니다</p>
-        </div>
-      )}
-
       {/* 프로필 */}
       <Profile
         profileImage={profileImage}
@@ -865,7 +745,6 @@ function App() {
         onNicknameChange={handleNicknameChange}
         onDescriptionChange={handleDescriptionChange}
         isLoggedIn={isLoggedIn}
-        isViewingShared={isViewingShared}
       />
 
       {/* 탭 */}
@@ -878,11 +757,9 @@ function App() {
             <p className="empty-text">
               {activeTab === "zips" ? "Zips" : "위시리스트"}가 비어있습니다
             </p>
-            {!isViewingShared && (
-              <p style={{ color: "#9ca3af", fontSize: "14px" }}>
-                + 버튼을 눌러 아이템을 추가해보세요!
-              </p>
-            )}
+            <p style={{ color: "#9ca3af", fontSize: "14px" }}>
+              + 버튼을 눌러 아이템을 추가해보세요!
+            </p>
           </div>
         ) : (
           <div className="items-grid">
@@ -893,7 +770,7 @@ function App() {
         )}
 
         {/* 플로팅 추가 버튼 */}
-        {isLoggedIn && !isViewingShared && (
+        {isLoggedIn && (
           <button className="floating-add-btn" onClick={handleOpenAddModal}>
             +
           </button>
