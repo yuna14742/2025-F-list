@@ -569,20 +569,17 @@ function App() {
   // URL에서 공유 데이터 로드
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const sharedData = urlParams.get("shared");
+    const sharedData = urlParams.get("s"); // "shared" → "s"
 
     if (sharedData) {
       try {
         const decoded = JSON.parse(decodeURIComponent(sharedData));
         setIsViewingShared(true);
-        setNickname(decoded.nickname || "@nickname");
-        setDescription(
-          decoded.description ||
-            "나만의 옷장을 원하나요? 자신의 옷장에 대한 설명을 적어주세요!"
-        );
-        setProfileImage(decoded.profileImage || "");
-        setZipsItems(decoded.zipsItems || []);
-        setWishlistItems(decoded.wishlistItems || []);
+        setNickname(decoded.n || "@nickname"); // n → nickname
+        setDescription(decoded.d || "기본 설명"); // d → description
+        setProfileImage(decoded.p || ""); // p → profileImage
+        setZipsItems(decoded.z || []); // z → zipsItems
+        setWishlistItems(decoded.w || []); // w → wishlistItems
       } catch (error) {
         console.error("공유 데이터 로드 실패:", error);
       }
@@ -704,29 +701,33 @@ function App() {
 
   // 공유 기능 (원본 방식으로 되돌림)
   const handleShare = () => {
-    console.log("공유 버튼 클릭됨!");
-
     const shareData = {
-      nickname,
-      description,
-      profileImage,
-      zipsItems,
-      wishlistItems,
+      n: nickname, // nickname → n
+      d: description, // description → d
+      p: profileImage, // profileImage → p
+      z: zipsItems.map((item) => ({
+        // zipsItems → z
+        b: item.brand, // brand → b
+        n: item.name, // name → n
+        pr: item.price, // price → pr
+        i: item.image, // image → i
+        id: item.id,
+      })),
+      w: wishlistItems.map((item) => ({
+        // wishlistItems → w
+        b: item.brand,
+        n: item.name,
+        pr: item.price,
+        i: item.image,
+        id: item.id,
+      })),
     };
 
     const encoded = encodeURIComponent(JSON.stringify(shareData));
-    const shareUrl = `${window.location.origin}${window.location.pathname}?shared=${encoded}`;
+    const shareUrl = `${window.location.origin}${window.location.pathname}?s=${encoded}`; // shared → s
 
-    navigator.clipboard
-      .writeText(shareUrl)
-      .then(() => {
-        console.log("클립보드 복사 성공");
-        alert("공유 링크가 클립보드에 복사되었습니다");
-      })
-      .catch(() => {
-        console.log("클립보드 복사 실패");
-        prompt("공유 링크를 복사하세요:", shareUrl);
-      });
+    navigator.clipboard.writeText(shareUrl);
+    alert("공유 링크가 복사되었습니다!");
   };
 
   //로딩 중일때 해결 -> 시크릿모드로 접속, 인터넷 캐시 삭제
