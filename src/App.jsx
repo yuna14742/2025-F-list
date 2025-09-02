@@ -565,7 +565,7 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // URL에서 공유 데이터 로드 (기존 방식)
+  // URL에서 공유 데이터 로드
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const sharedData = urlParams.get("shared");
@@ -701,30 +701,68 @@ function App() {
     setShowAddModal(true);
   };
 
-  // 공유 링크 복사 기능 (tiny url 사용)
+  // 공유 기능 (TinyURL 사용 + 디버깅 로그)
   const handleShare = async () => {
-    const shareData = {
-      nickname,
-      description,
-      profileImage,
-      zipsItems,
-      wishlistItems,
-    };
-    const encoded = encodeURIComponent(JSON.stringify(shareData));
-    const longUrl = `${window.location.origin}?shared=${encoded}`;
+    console.log("공유 버튼 클릭됨!");
 
-    //Tinyurl API 사용
     try {
-      const response = await fetch(
-        `https://tinyurl.com/api-create.php?url=${longUrl}`
-      );
-      const shortUrl = await response.text();
+      const shareData = {
+        nickname,
+        description,
+        profileImage,
+        zipsItems,
+        wishlistItems,
+      };
 
-      navigator.clipboard.writeText(shortUrl);
-      alert("공유 링크가 복사되었습니다");
+      console.log("공유 데이터:", shareData);
+
+      const encoded = encodeURIComponent(JSON.stringify(shareData));
+      const longUrl = `${window.location.origin}${window.location.pathname}?shared=${encoded}`;
+
+      console.log("긴 URL 생성:", longUrl);
+
+      const response = await fetch(
+        `https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`
+      );
+      console.log("TinyURL 응답:", response);
+
+      const shortUrl = await response.text();
+      console.log("짧은 URL:", shortUrl);
+
+      navigator.clipboard
+        .writeText(shortUrl)
+        .then(() => {
+          console.log("클립보드 복사 성공");
+          alert("짧은 공유 링크가 복사되었습니다");
+        })
+        .catch(() => {
+          console.log("클립보드 복사 실패, prompt 사용");
+          prompt("공유 링크를 복사하세요:", shortUrl);
+        });
     } catch (error) {
-      // 실패시 원래 URL 사용하도록
-      navigator.clipboard.writeText(longUrl);
+      console.error("에러 발생:", error);
+
+      // 실패시 원래 URL 사용
+      const shareData = {
+        nickname,
+        description,
+        profileImage,
+        zipsItems,
+        wishlistItems,
+      };
+      const encoded = encodeURIComponent(JSON.stringify(shareData));
+      const longUrl = `${window.location.origin}${window.location.pathname}?shared=${encoded}`;
+
+      navigator.clipboard
+        .writeText(longUrl)
+        .then(() => {
+          console.log("원본 URL 클립보드 복사 성공");
+          alert("공유 링크가 복사되었습니다!");
+        })
+        .catch(() => {
+          console.log("원본 URL 클립보드 복사 실패, prompt 사용");
+          prompt("공유 링크를 복사하세요:", longUrl);
+        });
     }
   };
 
