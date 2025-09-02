@@ -479,7 +479,7 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isViewingShared, setIsViewingShared] = useState(false);
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); //나중에 true로 바꿔야함
+  const [loading, setLoading] = useState(false); //나중에 true로 바꿔야함
 
   const [zipsItems, setZipsItems] = useState([]);
   const [wishlistItems, setWishlistItems] = useState([]);
@@ -504,6 +504,7 @@ function App() {
   // Firebase 인증 상태 감지
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log("onAuthStateChanged 실행됨"); //추가
       if (user) {
         setUser(user);
         setIsLoggedIn(true);
@@ -557,32 +558,37 @@ function App() {
         setZipsItems([]);
         setWishlistItems([]);
       }
+      console.log("setLoading(false)호출");
       setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
-  // URL에서 공유 데이터 로드
+  // URL에서 공유 데이터 로드 (Firebase저장방식으로 바꿈)
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const sharedData = urlParams.get("shared");
+    const shareId = new URLSearchParams(window.location.search).get("share");
 
-    if (sharedData) {
-      try {
-        const decoded = JSON.parse(decodeURIComponent(sharedData));
-        setIsViewingShared(true);
-        setNickname(decoded.nickname || "@nickname");
-        setDescription(
-          decoded.description ||
-            "나만의 옷장을 원하나요? 자신의 옷장에 대한 설명을 적어주세요!"
-        );
-        setProfileImage(decoded.profileImage || "");
-        setZipsItems(decoded.zipsItems || []);
-        setWishlistItems(decoded.wishlistItems || []);
-      } catch (error) {
-        console.error("공유 데이터 로드 실패:", error);
-      }
+    if (shareId) {
+      const loadSharedData = async () => {
+        try {
+          const docSnap = await getDoc(doc(db, "shares", shareId));
+
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setIsViewingShared(true);
+            setNickname(data.nickname || "@nickname");
+            setDescription(data.description || "설명이 없습니다.");
+            setProfileImage(data.profileImage || "");
+            setZipsItems(data.zipsItems || []);
+            setWishlistItems(data.wishlistItems || []);
+          }
+        } catch (error) {
+          console.error("공유 데이터 로드 실패:", error);
+        }
+      };
+
+      loadSharedData();
     }
   }, []);
 
@@ -699,31 +705,45 @@ function App() {
     setShowAddModal(true);
   };
 
-  // 공유 기능
-  const handleShare = () => {
-    const shareData = {
-      nickname,
-      description,
-      profileImage,
-      zipsItems,
-      wishlistItems,
-    };
+  // 공유 기능 (Firebase 저장 방식) url 줄일 수 있음
+  const handleShare = async () => {
+    try {
+      const shareData = {
+        nickname,
+        description,
+        profileImage,
+        zipsItems,
+        wishlistItems,
+        createdAt: new Date().toISOString(), //생성 시간 추가함
+      };
 
-    const encoded = encodeURIComponent(JSON.stringify(shareData));
-    const shareUrl = `${window.location.origin}${window.location.pathname}?shared=${encoded}`;
+      //고유한 공유 ID 생성
+      const shareId =
+        Date.now().toString() + Math.random().toString(36).substr(2, 5);
 
-    navigator.clipboard
-      .writeText(shareUrl)
-      .then(() => {
-        alert("공유 링크가 클립보드에 복사되었습니다! 🔗");
-      })
-      .catch(() => {
-        prompt("공유 링크를 복사하세요:", shareUrl);
-      });
+      //Firebase에 공유 데이터 저장
+      await setDoc(doc(db, "shares", shareId), shareData);
+
+      //URL 생성
+      const shareUrl = `${window.location.origin}${window.location.pathname}?share=${shareId}`;
+
+      navigator.clipboard
+        .writeText(shareUrl)
+        .then(() => {
+          alert("공유 링크가 클립보드에 복사되었습니다");
+        })
+        .catch(() => {
+          prompt("공유 링크를 복사하세요:", shareUrl);
+        });
+    } catch (error) {
+      console.error("공유 링크 생성 실패:", error);
+      alert("공유 링크 생성에 실패했습니다. 다시 시도해주세요.");
+    }
   };
 
   const currentItems = activeTab === "zips" ? zipsItems : wishlistItems;
 
+  //로딩 중일때 해결 -> 시크릿모드로 접속, 인터넷 캐시 삭제
   if (loading) {
     return (
       <div className="app">
@@ -734,7 +754,7 @@ function App() {
             alignItems: "center",
             height: "100vh",
             fontSize: "18px",
-            color: "#6b7280",
+            color: "black",
           }}
         >
           로딩 중...
