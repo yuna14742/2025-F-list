@@ -701,72 +701,32 @@ function App() {
     setShowAddModal(true);
   };
 
-  // 공유 기능 (TinyURL 사용 + 디버깅 로그)
-  const handleShare = async () => {
+  // 공유 기능 (원본 방식으로 되돌림)
+  const handleShare = () => {
     console.log("공유 버튼 클릭됨!");
 
-    try {
-      const shareData = {
-        nickname,
-        description,
-        profileImage,
-        zipsItems,
-        wishlistItems,
-      };
+    const shareData = {
+      nickname,
+      description,
+      profileImage,
+      zipsItems,
+      wishlistItems,
+    };
 
-      console.log("공유 데이터:", shareData);
+    const encoded = encodeURIComponent(JSON.stringify(shareData));
+    const shareUrl = `${window.location.origin}${window.location.pathname}?shared=${encoded}`;
 
-      const encoded = encodeURIComponent(JSON.stringify(shareData));
-      const longUrl = `${window.location.origin}${window.location.pathname}?shared=${encoded}`;
-
-      console.log("긴 URL 생성:", longUrl);
-
-      const response = await fetch(
-        `https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`
-      );
-      console.log("TinyURL 응답:", response);
-
-      const shortUrl = await response.text();
-      console.log("짧은 URL:", shortUrl);
-
-      navigator.clipboard
-        .writeText(shortUrl)
-        .then(() => {
-          console.log("클립보드 복사 성공");
-          alert("짧은 공유 링크가 복사되었습니다");
-        })
-        .catch(() => {
-          console.log("클립보드 복사 실패, prompt 사용");
-          prompt("공유 링크를 복사하세요:", shortUrl);
-        });
-    } catch (error) {
-      console.error("에러 발생:", error);
-
-      // 실패시 원래 URL 사용
-      const shareData = {
-        nickname,
-        description,
-        profileImage,
-        zipsItems,
-        wishlistItems,
-      };
-      const encoded = encodeURIComponent(JSON.stringify(shareData));
-      const longUrl = `${window.location.origin}${window.location.pathname}?shared=${encoded}`;
-
-      navigator.clipboard
-        .writeText(longUrl)
-        .then(() => {
-          console.log("원본 URL 클립보드 복사 성공");
-          alert("공유 링크가 복사되었습니다!");
-        })
-        .catch(() => {
-          console.log("원본 URL 클립보드 복사 실패, prompt 사용");
-          prompt("공유 링크를 복사하세요:", longUrl);
-        });
-    }
+    navigator.clipboard
+      .writeText(shareUrl)
+      .then(() => {
+        console.log("클립보드 복사 성공");
+        alert("공유 링크가 클립보드에 복사되었습니다");
+      })
+      .catch(() => {
+        console.log("클립보드 복사 실패");
+        prompt("공유 링크를 복사하세요:", shareUrl);
+      });
   };
-
-  const currentItems = activeTab === "zips" ? zipsItems : wishlistItems;
 
   //로딩 중일때 해결 -> 시크릿모드로 접속, 인터넷 캐시 삭제
   if (loading) {
