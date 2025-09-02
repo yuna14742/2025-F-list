@@ -483,6 +483,7 @@ function App() {
 
   const [zipsItems, setZipsItems] = useState([]);
   const [wishlistItems, setWishlistItems] = useState([]);
+  const currentItems = activeTab === "zips" ? zipsItems : wishlistItems;
 
   // 페이지 로드시 리다이렉트 결과 확인 (수정)
   useEffect(() => {
@@ -814,7 +815,7 @@ function App() {
       {/* 공유 모드 알림 */}
       {isViewingShared && (
         <div className="shared-notice">
-          <p>👀 다른 사용자의 F-list를 보고 있습니다</p>
+          <p>다른 사용자의 F-list를 보고 있습니다</p>
         </div>
       )}
 
